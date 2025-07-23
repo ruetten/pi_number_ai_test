@@ -44,32 +44,23 @@ def show_predictions(model, x_test, y_test, num_images=6):
     """
     print("\n=== Visual Predictions ===")
     
-    # Get predictions for all test images to find correct and incorrect ones
+    # Get predictions for all test images to find one incorrect prediction
     all_predictions = model.predict(x_test.reshape(-1, 784), verbose=0)
     all_predicted_digits = np.argmax(all_predictions, axis=1)
     
-    # Find indices of correct and incorrect predictions
-    correct_indices = np.where(all_predicted_digits == y_test)[0]
-    incorrect_indices = np.where(all_predicted_digits != y_test)[0]
+    # Find first incorrect prediction
+    incorrect_idx = None
+    for i in range(len(y_test)):
+        if all_predicted_digits[i] != y_test[i]:
+            incorrect_idx = i
+            break
     
-    # Select images to show: include at least one wrong prediction if available
-    selected_indices = []
-    
-    # Add at least one incorrect prediction if any exist
-    if len(incorrect_indices) > 0:
-        selected_indices.extend(incorrect_indices[:2])  # Show up to 2 wrong ones
-    
-    # Fill the rest with correct predictions
-    remaining_slots = num_images - len(selected_indices)
-    if remaining_slots > 0 and len(correct_indices) > 0:
-        selected_indices.extend(correct_indices[:remaining_slots])
-    
-    # If we still need more images, just use the first ones
-    while len(selected_indices) < num_images:
-        selected_indices.append(len(selected_indices))
-    
-    # Limit to available images
-    selected_indices = selected_indices[:min(num_images, len(x_test))]
+    # Select images to show: first few + one guaranteed incorrect
+    selected_indices = list(range(num_images - 1))  # First 5 images
+    if incorrect_idx is not None:
+        selected_indices.append(incorrect_idx)  # Add the incorrect one
+    else:
+        selected_indices.append(num_images - 1)  # Fallback if somehow all are correct
     
     # Get predictions for selected images
     predictions = all_predictions[selected_indices]
@@ -104,9 +95,6 @@ def show_predictions(model, x_test, y_test, num_images=6):
         print("\nHow the digit looks:")
         print(image_to_ascii(x_test[idx]))
     
-    # Print accuracy summary
-    correct = sum(1 for i, idx in enumerate(selected_indices) if y_test[idx] == predicted_digits[i])
-    print(f"\nOverall: {correct}/{len(selected_indices)} correct predictions ({correct/len(selected_indices)*100:.1f}%)")
 
 def main():
     """
