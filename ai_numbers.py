@@ -21,7 +21,8 @@ def create_neural_network():
     
     # Create simple neural network
     model = keras.Sequential([
-        layers.Dense(128, activation='relu', input_shape=(784,)),  # Hidden layer
+        layers.Dense(128, activation='relu', input_shape=(784,)),  # Input layer
+        # TODO: Add more hiddenlayers
         layers.Dense(10, activation='softmax')                     # Output layer
     ])
     
@@ -30,7 +31,7 @@ def create_neural_network():
     
     # Train model
     print("Training...")
-    model.fit(x_train, y_train, epochs=3, verbose=1)
+    model.fit(x_train, y_train, epochs=1, verbose=1) # TODO: Try training for more epochs (not more than 10)
     
     # Test model
     test_loss, test_accuracy = model.evaluate(x_test, y_test, verbose=0)

@@ -8,3 +8,5 @@ scikit-learn>=1.3.0
 # Raspberry Pi specific dependencies
 picamera2
 RPi.GPIO
+
+protobuf
