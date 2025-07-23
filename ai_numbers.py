@@ -1,5 +1,7 @@
 from tensorflow import keras
 from tensorflow.keras import layers
+import matplotlib.pyplot as plt
+import numpy as np
 
 def create_neural_network():
     """
@@ -37,6 +39,43 @@ def create_neural_network():
     
     return model
 
+def show_predictions(model, x_test, y_test, num_images=6):
+    """
+    Show visual predictions for high school students
+    """
+    print("\n=== Visual Predictions ===")
+    
+    # Get predictions for first few test images
+    predictions = model.predict(x_test[:num_images].reshape(-1, 784), verbose=0)
+    predicted_digits = np.argmax(predictions, axis=1)
+    
+    # Create a figure with subplots
+    fig, axes = plt.subplots(2, 3, figsize=(10, 6))
+    fig.suptitle('Neural Network Predictions vs Actual Digits', fontsize=16)
+    
+    for i in range(num_images):
+        row = i // 3
+        col = i % 3
+        
+        # Show the original 28x28 image
+        axes[row, col].imshow(x_test[i], cmap='gray')
+        axes[row, col].set_title(f'Actual: {y_test[i]}\nPredicted: {predicted_digits[i]}', 
+                                fontsize=12)
+        axes[row, col].axis('off')
+        
+        # Color the title based on correctness
+        if y_test[i] == predicted_digits[i]:
+            axes[row, col].title.set_color('green')  # Correct prediction
+        else:
+            axes[row, col].title.set_color('red')    # Wrong prediction
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Print accuracy summary
+    correct = sum(1 for i in range(num_images) if y_test[i] == predicted_digits[i])
+    print(f"Correct predictions: {correct}/{num_images}")
+
 def main():
     """
     Run the neural network
@@ -45,6 +84,13 @@ def main():
     
     # Create and train model
     model = create_neural_network()
+    
+    # Load test data for visualization
+    (_, _), (x_test, y_test) = keras.datasets.mnist.load_data()
+    x_test = x_test / 255.0  # Normalize for display
+    
+    # Show visual predictions
+    show_predictions(model, x_test, y_test)
     
     print("Done!")
 
