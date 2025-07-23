@@ -1,6 +1,5 @@
 from tensorflow import keras
 from tensorflow.keras import layers
-import matplotlib.pyplot as plt
 import numpy as np
 
 def create_neural_network():
@@ -41,7 +40,7 @@ def create_neural_network():
 
 def show_predictions(model, x_test, y_test, num_images=6):
     """
-    Show visual predictions for high school students
+    Show text-based predictions for high school students (no GUI needed)
     """
     print("\n=== Visual Predictions ===")
     
@@ -49,32 +48,38 @@ def show_predictions(model, x_test, y_test, num_images=6):
     predictions = model.predict(x_test[:num_images].reshape(-1, 784), verbose=0)
     predicted_digits = np.argmax(predictions, axis=1)
     
-    # Create a figure with subplots
-    fig, axes = plt.subplots(2, 3, figsize=(10, 6))
-    fig.suptitle('Neural Network Predictions vs Actual Digits', fontsize=16)
+    def image_to_ascii(image, width=14):
+        """Convert 28x28 image to ASCII art"""
+        # Resize to smaller for display
+        resized = image[::2, ::2]  # Take every 2nd pixel (14x14)
+        ascii_chars = " .:-=+*#%@"
+        ascii_img = ""
+        for row in resized:
+            for pixel in row:
+                char_index = int(pixel * (len(ascii_chars) - 1))
+                ascii_img += ascii_chars[char_index] + " "
+            ascii_img += "\n"
+        return ascii_img
     
+    # Show each prediction
     for i in range(num_images):
-        row = i // 3
-        col = i % 3
+        print(f"\n--- Image {i+1} ---")
+        print(f"Actual digit: {y_test[i]}")
+        print(f"Predicted digit: {predicted_digits[i]}")
         
-        # Show the original 28x28 image
-        axes[row, col].imshow(x_test[i], cmap='gray')
-        axes[row, col].set_title(f'Actual: {y_test[i]}\nPredicted: {predicted_digits[i]}', 
-                                fontsize=12)
-        axes[row, col].axis('off')
-        
-        # Color the title based on correctness
+        # Show correctness
         if y_test[i] == predicted_digits[i]:
-            axes[row, col].title.set_color('green')  # Correct prediction
+            print("✓ CORRECT!")
         else:
-            axes[row, col].title.set_color('red')    # Wrong prediction
-    
-    plt.tight_layout()
-    plt.show()
+            print("✗ WRONG")
+        
+        # Show ASCII art of the digit
+        print("\nHow the digit looks:")
+        print(image_to_ascii(x_test[i]))
     
     # Print accuracy summary
     correct = sum(1 for i in range(num_images) if y_test[i] == predicted_digits[i])
-    print(f"Correct predictions: {correct}/{num_images}")
+    print(f"\nOverall: {correct}/{num_images} correct predictions ({correct/num_images*100:.1f}%)")
 
 def main():
     """
