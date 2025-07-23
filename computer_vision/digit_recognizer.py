@@ -33,6 +33,11 @@ class DigitRecognizer:
         # TODO: Copy Neural Network from slides
         model = keras.Sequential([
             layers.Dense(128, activation='relu', input_shape=(784,)),
+            layers.Dropout(0.2),
+            layers.Dense(64, activation='relu'),
+            layers.Dropout(0.2),
+            layers.Dense(32, activation='relu'),
+            layers.Dropout(0.2),
             layers.Dense(10, activation='softmax')
         ])
         
