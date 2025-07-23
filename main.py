@@ -18,7 +18,7 @@ class ComputerVisionVault:
     
     # GPIO Pin Configurations
 
-    # TODO: Make sure variables are set to correct GPIO numbers based on your setup. 
+    # TODO: Make sure variables are set to correct pin numbers based on your setup. 
     SEGMENTS = {
         'a': 13, 'b': 19, 'c': 7, 'd': 8,
         'e': 5, 'f': 6, 'g': 26,
@@ -74,17 +74,20 @@ class ComputerVisionVault:
         for segment_pin in self.SEGMENTS.values():
             GPIO.output(segment_pin, False)
             
-    def recognize_digit(self, target_digit: int) -> None:
-        """Recognize a single digit"""
-        print(f"Starting digit recognition for target: {target_digit}")
-        print("Show the digit to the camera...")
+    def run_sequence(self, pin: int) -> None:
+        """Run the main sequence for digit recognition"""
+        num_correct = 0
+        pin_digits = [int(d) for d in str(pin)]
+        
+        print(f"Starting vault sequence for PIN: {pin}")
+        print("Show digits to the camera in sequence...")
         
         try:
             # Initialize digit tracker
             tracker = DigitTracker()
             tracker.initialize_camera()
             
-            while True:
+            while num_correct < 3:
                 # Get prediction from digit tracker
                 prediction, confidence = tracker.get_single_prediction()
 
@@ -100,21 +103,26 @@ class ComputerVisionVault:
                     # Display predicted number on 7-segment display
                     self.display_number_on_7seg(prediction)
                     
-                    # Check if it matches the target digit
-                    if target_digit == prediction:
-                        print("Access granted! Correct digit detected.")
-                        break
+                    # Check if it matches the expected digit
+                    if pin_digits[num_correct] == prediction:
+                        print(f"Correct! Digit {num_correct + 1}/3")
+                        num_correct += 1
+                        
+                        # Check if all digits are correct
+                        if num_correct >= 3:
+                            print("Access granted! All digits correct.")
+                            break
                     else:
-                        print(f"Incorrect. Expected: {target_digit}, Got: {prediction}")
+                        print(f"Incorrect. Expected: {pin_digits[num_correct]}, Got: {prediction}")
                     
                     time.sleep(self.DISPLAY_DELAY)
                     # Clear 7-segment display
                     self.clear_7seg_display()
                     
         except KeyboardInterrupt:
-            print("\nRecognition interrupted by user")
+            print("\nSequence interrupted by user")
         except Exception as e:
-            print(f"Error during recognition: {e}")
+            print(f"Error during sequence: {e}")
         finally:
             # Cleanup
             if 'tracker' in locals():
@@ -145,12 +153,12 @@ def main():
     atexit.register(gpio_cleanup)
     
     parser = argparse.ArgumentParser(description="Computer Vision Vault - Raspberry Pi Security System")
-    parser.add_argument('digit', type=int, help='Enter single digit (0-9)')
+    parser.add_argument('pin', type=int, help='Enter 3 digit PIN (100-999)')
     args = parser.parse_args()
     
-    # Validate digit
-    if args.digit < 0 or args.digit > 9:
-        print('ERROR: Enter a valid single digit (0-9)!')
+    # Validate PIN
+    if args.pin < 100 or args.pin > 999:
+        print('ERROR: Enter a valid 3 digit PIN (100-999)!')
         sys.exit(1)
     
     vault = None
@@ -158,8 +166,8 @@ def main():
         # Initialize the vault system
         vault = ComputerVisionVault()
         
-        # Run the digit recognition
-        vault.recognize_digit(args.digit)
+        # Run the sequence
+        vault.run_sequence(args.pin)
         
     except Exception as e:
         print(f"Error: {e}")
