@@ -44,9 +44,36 @@ def show_predictions(model, x_test, y_test, num_images=6):
     """
     print("\n=== Visual Predictions ===")
     
-    # Get predictions for first few test images
-    predictions = model.predict(x_test[:num_images].reshape(-1, 784), verbose=0)
-    predicted_digits = np.argmax(predictions, axis=1)
+    # Get predictions for all test images to find correct and incorrect ones
+    all_predictions = model.predict(x_test.reshape(-1, 784), verbose=0)
+    all_predicted_digits = np.argmax(all_predictions, axis=1)
+    
+    # Find indices of correct and incorrect predictions
+    correct_indices = np.where(all_predicted_digits == y_test)[0]
+    incorrect_indices = np.where(all_predicted_digits != y_test)[0]
+    
+    # Select images to show: include at least one wrong prediction if available
+    selected_indices = []
+    
+    # Add at least one incorrect prediction if any exist
+    if len(incorrect_indices) > 0:
+        selected_indices.extend(incorrect_indices[:2])  # Show up to 2 wrong ones
+    
+    # Fill the rest with correct predictions
+    remaining_slots = num_images - len(selected_indices)
+    if remaining_slots > 0 and len(correct_indices) > 0:
+        selected_indices.extend(correct_indices[:remaining_slots])
+    
+    # If we still need more images, just use the first ones
+    while len(selected_indices) < num_images:
+        selected_indices.append(len(selected_indices))
+    
+    # Limit to available images
+    selected_indices = selected_indices[:min(num_images, len(x_test))]
+    
+    # Get predictions for selected images
+    predictions = all_predictions[selected_indices]
+    predicted_digits = all_predicted_digits[selected_indices]
     
     def image_to_ascii(image, width=14):
         """Convert 28x28 image to ASCII art"""
@@ -62,24 +89,24 @@ def show_predictions(model, x_test, y_test, num_images=6):
         return ascii_img
     
     # Show each prediction
-    for i in range(num_images):
+    for i, idx in enumerate(selected_indices):
         print(f"\n--- Image {i+1} ---")
-        print(f"Actual digit: {y_test[i]}")
+        print(f"Actual digit: {y_test[idx]}")
         print(f"Predicted digit: {predicted_digits[i]}")
         
         # Show correctness
-        if y_test[i] == predicted_digits[i]:
+        if y_test[idx] == predicted_digits[i]:
             print("✓ CORRECT!")
         else:
             print("✗ WRONG")
         
         # Show ASCII art of the digit
         print("\nHow the digit looks:")
-        print(image_to_ascii(x_test[i]))
+        print(image_to_ascii(x_test[idx]))
     
     # Print accuracy summary
-    correct = sum(1 for i in range(num_images) if y_test[i] == predicted_digits[i])
-    print(f"\nOverall: {correct}/{num_images} correct predictions ({correct/num_images*100:.1f}%)")
+    correct = sum(1 for i, idx in enumerate(selected_indices) if y_test[idx] == predicted_digits[i])
+    print(f"\nOverall: {correct}/{len(selected_indices)} correct predictions ({correct/len(selected_indices)*100:.1f}%)")
 
 def main():
     """
